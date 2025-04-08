@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "HK_AudioMod": {
+      "commandName": "Project",
+      "commandLineArgs": "cmd /K \"D:\\Games\\Hollow-Knight-Steamrip.com\\Hollow Knight v1.5.78.11833\\Hollow Knight.exe\"\r\n\r\n"
+    }
+  }
+}
