@@ -1,4 +1,5 @@
-﻿using HutongGames.Utility;
+﻿using HutongGames.PlayMaker.Actions;
+using HutongGames.Utility;
 using IL;
 using IL.TMPro;
 using Modding;
@@ -41,9 +42,17 @@ namespace HK_AudioMod
         public static GameObject placementCursor = null;
         public static GameObject customCursor = null;
 
+        Vector2 posA, posB = new Vector2(-1000, -1000);
+
+        public static bool firstUpdate = true;
+        public static bool mapMarkerMenuOpen = false;
+
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
             Log("Initialize");
+
+
+
 
 
 
@@ -51,33 +60,57 @@ namespace HK_AudioMod
             {
                 orig(self);
                 placementCursor = self.placementCursor;
+                mapMarkerMenuOpen = true;
+
+                Log("MapMarkerMenu Open");
+
+                AudioRegionsHandler.addAudioRegion(new GameObject("cokc"), new Vector3(0, 0, 0), new Vector3(0.1f, 0.1f, 0.1f));
+                AudioRegionsHandler.addAudioRegion(new GameObject("Mantis Lords"), new Vector3(-0.4f, -14.1f, 0), new Vector3(0.5f, 1, 1));
+
+
+                foreach (GameObject audioRegion in AudioRegionsHandler.gameObjects)
+                {
+                    if (audioRegion != null)
+                    {
+                        Log(audioRegion.name);
+                        audioRegion.transform.SetParent(GameManager.instance.gameMap.transform);
+
+                        audioRegion.transform.position -= getMapCursorPosition();
+                        Log(audioRegion.transform.localPosition);
+
+                        audioRegion.GetComponent<SpriteRenderer>().sprite = LoadCustomSprite();
+                        Log("instantiated: " + audioRegion.name);
+
+
+                        audioRegion.layer = 5;
+
+                    }
+                }
 
             };
+
 
             On.MapMarkerMenu.Close += (orig, self) =>
             {
+                Log("MapMarkerMenu Close");
                 orig(self);
+                UObject.Destroy(customCursor);
                 placementCursor = null;
+                mapMarkerMenuOpen = false;
+                AudioRegionsHandler.clearList();
             };
 
-            On.MapMarkerMenu.PlaceMarker += (orig, self) =>
-            {
-                orig(self);
-                
-                Log(self.panSpeed);
-            };
-
-            
 
 
-           
+
+
+
 
             ModHooks.HeroUpdateHook += () =>
             {
-                if (placementCursor != null)
+                if (mapMarkerMenuOpen)
                 {
-                   
-                    if(customCursor == null)
+                    if (customCursor == null)
                     {
                         customCursor = new GameObject();
                         customCursor.AddComponent<SpriteRenderer>();
@@ -85,41 +118,73 @@ namespace HK_AudioMod
 
                     var sr = customCursor.GetComponent<SpriteRenderer>();
                     customCursor.GetComponent<SpriteRenderer>().sprite = LoadCustomSprite();
-                    customCursor.transform.localScale = new Vector3(1, 1, 1);
+                    customCursor.transform.localScale = new Vector3(0.1f, 0.1f, 0.5f);
                     customCursor.layer = 5;
                     sr.sortingLayerName = "HUD";
                     sr.sortingOrder = 1000;
-                    customCursor.transform.SetParent(placementCursor.transform.parent);
+
+
                     customCursor.transform.position = placementCursor.transform.position;
 
+                    if (Input.GetKeyDown(KeyCode.C))
+                    {
+                        foreach (GameObject gameObject in AudioRegionsHandler.gameObjects)
+                        {
+                            gameObject.transform.SetPositionZ(customCursor.transform.position.z);
+                            if (gameObject.GetComponent<SpriteRenderer>().bounds.Intersects(customCursor.GetComponent<SpriteRenderer>().bounds))
+                            {
+                                Log(gameObject.name + " collision");
+                            }
+                        }
+                    }
 
 
-                    //Log(customCursor.transform.parent);
-                    //Log(map.transform.position);
 
-                    //Map ScrollPosition
-                    //Log(GameManager.instance.gameMap.transform.position);
-                    
+                    if (Input.GetKeyDown(KeyCode.L))
+                    {
+                        Log(getMapCursorPosition());
+                    }
 
+                    if (Input.GetKeyDown(KeyCode.Q))
+                    {
+                        if (posA == new Vector2(-1000, -1000))
+                        {
+                            posA = GameManager.instance.gameMap.transform.position - customCursor.transform.position;
+                        }
+                        else if (posB == new Vector2(-1000, -1000))
+                        {
+                            posB = GameManager.instance.gameMap.transform.position - customCursor.transform.position;
 
-
+                            Log("DIFFERENCE");
+                            Log(posA - posB);
+                        }
+                        else
+                        {
+                            Log("Reset");
+                            posA = new Vector2(-1000, -1000);
+                            posB = new Vector2(-1000, -1000);
+                        }
+                    }
                 }
 
-                var gameObject = new GameObject();
-                var spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
-                spriteRenderer.sprite = LoadCustomSprite();
-                gameObject.transform.parent = GameObject.Find("Knight").transform;
 
-                gameObject.transform.localPosition = new Vector2(0, 0);
-                
+
+
             };
         }
 
-        
 
+
+        public Vector3 getMapCursorPosition()
+        {
+
+            return placementCursor.transform.position - GameManager.instance.gameMap.transform.position + new Vector3(4f, -8.6f, 0);
+
+
+        }
         private Sprite LoadCustomSprite()
         {
-            byte[] fileData = File.ReadAllBytes($"D:\\Games\\Hollow-Knight-Steamrip.com\\Hollow Knight v1.5.78.11833\\Hollow Knight_Data\\Managed\\Mods\\HK_AudioMod\\FrameIcon.png");
+            byte[] fileData = File.ReadAllBytes($"Hollow Knight_Data\\Managed\\Mods\\HK_AudioMod\\red_square.png");
             Texture2D tex = new Texture2D(2, 2);
             tex.LoadImage(fileData); // Automatically resizes the texture
             return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
