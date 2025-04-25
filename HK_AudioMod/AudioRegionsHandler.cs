@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -9,30 +10,32 @@ namespace HK_AudioMod
 {
     public static class AudioRegionsHandler
     {
-        public static List<GameObject> gameObjects = new List<GameObject>();
+        public static List<AudioRegion> audioRegions = new List<AudioRegion>();
 
-        private static int index = 0;
-
-        public static void addAudioRegion(GameObject audioRegion, Vector3 position, Vector3 size)
+        public static void addAudioRegion(AudioRegion audioRegion, Vector2 position, Vector2 size)
         {
-            SpriteRenderer spriteRenderer = audioRegion.AddComponent<SpriteRenderer>();
+            SpriteRenderer spriteRenderer = audioRegion.gameObject.AddComponent<SpriteRenderer>();
             spriteRenderer.sortingLayerName = "HUD";
             spriteRenderer.sortingOrder = 1000;
-            spriteRenderer.transform.localScale = size;
+            spriteRenderer.transform.localScale = new Vector3(size.x,size.y,1);
             
-            audioRegion.transform.localPosition = position;
-            
+            audioRegion.gameObject.transform.localPosition = new Vector3(position.x,position.y,1);
 
-            gameObjects.Add(audioRegion);
+            audioRegion.gameObject.AddComponent<AudioSource>();
+
+
+
+            audioRegions.Add(audioRegion);
+            
         }
 
         public static string listToString()
         {
             String str = string.Empty;
 
-            foreach(GameObject go in gameObjects)
+            foreach(AudioRegion ar in audioRegions)
             {
-                str += go.name + "\n";
+                str += ar.name + "\n";
             }
 
             return str;
@@ -40,12 +43,12 @@ namespace HK_AudioMod
 
         public static void clearList()
         {
-            foreach (GameObject go in gameObjects)
+            foreach (AudioRegion ar in audioRegions)
             {
-                UnityEngine.Object.Destroy(go);
+                UnityEngine.Object.Destroy(ar.gameObject);
             }
 
-            gameObjects.Clear();
+            audioRegions.Clear();
         }
 
         
