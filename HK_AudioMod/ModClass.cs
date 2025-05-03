@@ -10,11 +10,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Policy;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.PlayerLoop;
 using UnityEngine.Timeline;
 using UnityEngine.UI;
+using static Mono.Security.X509.X520;
 using UObject = UnityEngine.Object;
 
 namespace HK_AudioMod
@@ -24,7 +26,7 @@ namespace HK_AudioMod
         internal static HK_AudioMod Instance;
 
         new public string GetName() => "HK_AudioMod";
-        public override string GetVersion() => "0.0.0.1";
+        public override string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
         //public override List<ValueTuple<string, string>> GetPreloadNames()
         //{
@@ -47,14 +49,33 @@ namespace HK_AudioMod
         public static bool firstUpdate = true;
         public static bool mapMarkerMenuOpen = false;
 
-        
+        public static Dictionary<string, AudioClip> nameClipMap = new Dictionary<string, AudioClip>();
+
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
             Log("Initialize");
 
-            Sprite s = LoadCustomSprite();
+            Sprite s = LoadCustomSprite("red_square.png");
+            Sprite green_square = LoadCustomSprite("green_square.png");
 
+            DirectoryInfo d = new DirectoryInfo(Application.dataPath + "\\Managed\\Mods\\HK_AudioMod\\Audio");
 
+            Log("Creating Map");
+
+            FileInfo[] Files = d.GetFiles("*.mp3");
+            foreach (FileInfo file in Files)
+            {
+                string fileName = Path.GetFileNameWithoutExtension(file.FullName);
+                AudioClip ac = null;
+                GameManager.instance.StartCoroutine(GetAndSetAudioClip(fileName, ac));
+                Log(fileName);
+                
+
+                nameClipMap.TryGetValue(fileName, out ac);
+                
+            }
+            Log("Created Map");
+            EscortHandler flowerEscortHandler = new EscortHandler();
 
             On.MapMarkerMenu.Open += (orig, self) =>
             {
@@ -62,33 +83,36 @@ namespace HK_AudioMod
                 placementCursor = self.placementCursor;
                 mapMarkerMenuOpen = true;
 
+                PlayerData pd = PlayerData.instance;
 
-
-                Log("MapMarkerMenu Open");
-
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Mantis Lords"), new Vector2(-0.4f, -14.1f), new Vector2(0.5f, 1));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("City Of Tears"), new Vector2(12.3f, -12.8f), new Vector2(0.5f, 0.5f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Watchers Knights"), new Vector2(14.4f, -8.9f), new Vector2(0.7f, 0.5f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("False Knight"), new Vector2(3.2f, -2.1f), new Vector2(0.5f, 0.5f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("The Collector"), new Vector2(22.4f, -11), new Vector2(0.5f, 0.5f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Broken Vessel"), new Vector2(2.5f, -19.9f), new Vector2(0.2f, 0.2f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Brooding Mawlek"), new Vector2(0, -2.4f), new Vector2(0.7f, 0.1f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Crystal Guardian"), new Vector2(12.6f, 2.1f), new Vector2(0.2f, 0.2f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Dung Defender"), new Vector2(13.7f, -14.4f), new Vector2(0.3f, 0.2f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Flukemarm"), new Vector2(7.1f, -16.3f), new Vector2(0.3f, 0.3f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Gruz Mother"), new Vector2(9.2f, -3.9f), new Vector2(0.15f, 0.1f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Hive Knight"), new Vector2(28.3f, -16.4f), new Vector2(0.15f, 0.15f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Hornet Protector"), new Vector2(-14.1f, -0.4f), new Vector2(0.4f, 0.3f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Massive Moss Charger"), new Vector2(-7.2f, -4.7f), new Vector2(0.5f, 0.2f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Nosk"), new Vector2(-6.2f, -18.6f), new Vector2(0.4f, 0.2f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Soul Master"), new Vector2(9.7f, -6.9f), new Vector2(0.3f, 0.3f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Traito Lord"), new Vector2(-15.2f, -5.9f), new Vector2(0.5f, 0.1f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Ummuu"), new Vector2(-3.9f, -6.8f), new Vector2(0.75f, 0.3f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Vengefly"), new Vector2(-11.8f, -0.0f), new Vector2(0.5f, 0.2f));
-                AudioRegionsHandler.addAudioRegion(new AudioRegion("Honet Sentinel"), new Vector2(31.6f, -13.1f), new Vector2(0.3f, 0.2f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Mantis Lords",pd.statueStateMantisLords.hasBeenSeen), new Vector2(-0.4f, -14.1f), new Vector2(0.5f, 1));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("City Of Tears", pd.scenesVisited.Contains("city")), new Vector2(12.3f, -12.8f), new Vector2(0.5f, 0.5f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Watchers Knights",pd.statueStateWatcherKnights.hasBeenSeen), new Vector2(14.4f, -8.9f), new Vector2(0.7f, 0.5f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("False Knight", pd.statueStateFalseKnight.hasBeenSeen), new Vector2(3.2f, -2.1f), new Vector2(0.5f, 0.5f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("The Collector", pd.statueStateCollector.hasBeenSeen), new Vector2(22.4f, -11), new Vector2(0.5f, 0.5f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Broken Vessel", pd.statueStateBrokenVessel.hasBeenSeen), new Vector2(2.5f, -19.9f), new Vector2(0.2f, 0.2f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Brooding Mawlek", pd.statueStateBroodingMawlek.hasBeenSeen), new Vector2(0, -2.4f), new Vector2(0.7f, 0.1f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Crystal Guardian", pd.statueStateCrystalGuardian1.hasBeenSeen), new Vector2(12.6f, 2.1f), new Vector2(0.2f, 0.2f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Dung Defender", pd.statueStateDungDefender.hasBeenSeen), new Vector2(13.7f, -14.4f), new Vector2(0.3f, 0.2f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Flukemarm", pd.statueStateFlukemarm.hasBeenSeen), new Vector2(7.1f, -16.3f), new Vector2(0.3f, 0.3f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Gruz Mother", pd.statueStateGruzMother.hasBeenSeen), new Vector2(9.2f, -3.9f), new Vector2(0.15f, 0.1f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Hive Knight", pd.statueStateHiveKnight.hasBeenSeen), new Vector2(28.3f, -16.4f), new Vector2(0.15f, 0.15f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Hornet Protector", pd.statueStateHornet1.hasBeenSeen), new Vector2(-14.1f, -0.4f), new Vector2(0.4f, 0.3f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Massive Moss Charger", pd.statueStateMegaMossCharger.hasBeenSeen), new Vector2(-7.2f, -4.7f), new Vector2(0.5f, 0.2f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Nosk", pd.statueStateNosk.hasBeenSeen), new Vector2(-6.2f, -18.6f), new Vector2(0.4f, 0.2f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Soul Master", pd.statueStateSoulMaster.hasBeenSeen), new Vector2(9.7f, -6.9f), new Vector2(0.3f, 0.3f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Traitor Lord", pd.killedTraitorLord), new Vector2(-15.2f, -5.9f), new Vector2(0.5f, 0.1f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Ummuu", pd.statueStateUumuu.hasBeenSeen), new Vector2(-3.9f, -6.8f), new Vector2(0.75f, 0.3f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Vengefly", pd.statueStateVengefly.hasBeenSeen), new Vector2(-11.8f, -0.0f), new Vector2(0.5f, 0.2f));
+                AudioRegionsHandler.addAudioRegion(new AudioRegion("Hornet Sentinel", pd.statueStateHornet2.hasBeenSeen), new Vector2(31.6f, -13.1f), new Vector2(0.3f, 0.2f));
                 AudioRegionsHandler.addAudioRegion(new AudioRegion("Delicate Flower - Goal"), new Vector2(-13.9f, -8f), new Vector2(0.2f, 0.15f));
                 AudioRegionsHandler.addAudioRegion(new AudioRegion("Delicate Flower - Origin"), new Vector2(22.9f, -3.3f), new Vector2(0.15f, 0.15f));
 
+
+                bool t = true;
+                AudioRegionsHandler.addAudioRegion(new CondAudioRegion("Delicate Flower - Escort", ref t), new Vector2(-13.9f, -8f), new Vector2(0.2f, 0.15f));
+
+                AudioRegionsHandler.set_visibility(true);
 
                 foreach (AudioRegion audioRegion in AudioRegionsHandler.audioRegions)
                 {
@@ -100,7 +124,15 @@ namespace HK_AudioMod
                         audioRegion.gameObject.transform.position -= getMapCursorPosition();
                         Log(audioRegion.gameObject.transform.localPosition);
 
-                        audioRegion.gameObject.GetComponent<SpriteRenderer>().sprite = s;
+                        if (audioRegion.GetType() == typeof(AudioRegion))
+                        {
+                            audioRegion.gameObject.GetComponent<SpriteRenderer>().sprite = s;
+                        }
+                        else if (audioRegion.GetType() == typeof(CondAudioRegion))
+                        {
+                            audioRegion.gameObject.GetComponent<SpriteRenderer>().sprite = green_square;
+                        }
+                        
                         Log("instantiated: " + audioRegion.name);
 
 
@@ -108,6 +140,14 @@ namespace HK_AudioMod
 
                     }
                 }
+
+                
+
+                Log("MapMarkerMenu Open");
+                
+                
+                
+                
 
             };
 
@@ -130,6 +170,8 @@ namespace HK_AudioMod
 
             ModHooks.HeroUpdateHook += () =>
             {
+
+
                 if (mapMarkerMenuOpen)
                 {
 
@@ -147,19 +189,23 @@ namespace HK_AudioMod
                     sr.sortingOrder = 1000;
 
 
-                    customCursor.transform.position = placementCursor.transform.position;
-
+                    customCursor.transform.SetParent(placementCursor.transform);
 
                     foreach (AudioRegion audioRegion in AudioRegionsHandler.audioRegions)
                     {
                         audioRegion.gameObject.transform.SetPositionZ(customCursor.transform.position.z);
                         if (audioRegion.gameObject.GetComponent<SpriteRenderer>().bounds.Intersects(customCursor.GetComponent<SpriteRenderer>().bounds))
                         {
-                            Log(audioRegion.name + " collision");
+                            if (!audioRegion.gameObject.GetComponent<AudioSource>().isPlaying)
+                            {
+                                Log(audioRegion.name + " collision");
+                            }
                             audioRegion.Play();
-                            Log("RegionClip: " + audioRegion.audioSource.clip.length);
+                            
                         }
                     }
+
+                    
 
 
 
@@ -192,7 +238,7 @@ namespace HK_AudioMod
                 }
 
 
-                
+
 
             };
         }
@@ -206,9 +252,9 @@ namespace HK_AudioMod
 
 
         }
-        private Sprite LoadCustomSprite()
+        private Sprite LoadCustomSprite(string fileName)
         {
-            byte[] fileData = File.ReadAllBytes($"Hollow Knight_Data\\Managed\\Mods\\HK_AudioMod\\red_square.png");
+            byte[] fileData = File.ReadAllBytes(Application.dataPath+"\\Managed\\Mods\\HK_AudioMod\\" + fileName);
             Texture2D tex = new Texture2D(2, 2);
             tex.LoadImage(fileData); // Automatically resizes the texture
             return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
@@ -218,5 +264,20 @@ namespace HK_AudioMod
         {
             throw new NotImplementedException();
         }
+
+
+        public IEnumerator GetAndSetAudioClip(string fileName, AudioClip ac)
+        {
+            UnityWebRequest webRequest = UnityWebRequestMultimedia.GetAudioClip(Application.dataPath + "\\Managed\\Mods\\HK_AudioMod\\Audio\\" + fileName + ".mp3", AudioType.MPEG);
+
+            yield return webRequest.SendWebRequest();
+
+            AudioClip clip = DownloadHandlerAudioClip.GetContent(webRequest);
+            clip.name = fileName;
+            ac = clip;
+            nameClipMap.Add(fileName, ac);
+        }
     }
+    
+
 }
