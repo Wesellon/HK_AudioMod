@@ -49,6 +49,8 @@ namespace HK_AudioMod
             this.isEnabled = isEnabled;
         }
 
+        
+
         public void Play()
         {
             if (!audioSource.isPlaying && isEnabled)

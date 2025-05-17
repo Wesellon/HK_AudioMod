@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace HK_AudioMod
 {
@@ -10,9 +11,11 @@ namespace HK_AudioMod
     {
         public bool condition;
 
-        public CondAudioRegion(string name, ref bool condition) : base(name)
+        public CondAudioRegion(string name, string currentRoom, bool condition,params string[] roomList ) : base(name)
         {
-            this.condition = condition;
+            this.condition = roomList.Contains(currentRoom) && condition;
+
+            gameObject.SetActive(this.condition);
         }
 
         public new void Play()
