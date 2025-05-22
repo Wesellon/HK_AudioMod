@@ -1,9 +1,13 @@
-﻿using HutongGames.PlayMaker.Actions;
+﻿using GlobalEnums;
+using HutongGames.PlayMaker;
+using HutongGames.PlayMaker.Actions;
 using HutongGames.Utility;
 using IL;
 using IL.TMPro;
 using Modding;
+using MonoMod.RuntimeDetour;
 using On;
+using On.HutongGames.PlayMaker.Actions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -52,9 +56,11 @@ namespace HK_AudioMod
 
         public static Dictionary<string, AudioClip> nameClipMap = new Dictionary<string, AudioClip>();
 
-        EscortHandler flowerEscortHandler = new EscortHandler();
+        public static InventorySoundPlayer isp ;
 
         public static string currentRoom = "";
+
+        public static bool isInvOpen = false;
 
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
@@ -81,7 +87,8 @@ namespace HK_AudioMod
             }
             Log("Created Map");
 
-
+            isp = new InventorySoundPlayer();
+            
             On.MapMarkerMenu.Open += (orig, self) =>
             {
                 orig(self);
@@ -112,10 +119,10 @@ namespace HK_AudioMod
                 AudioRegionsHandler.addAudioRegion(new AudioRegion("Hornet Sentinel", pd.statueStateHornet2.hasBeenSeen), new Vector2(31.6f, -13.1f), new Vector2(0.3f, 0.2f));
                 AudioRegionsHandler.addAudioRegion(new AudioRegion("Delicate Flower - Origin"), new Vector2(22.9f, -3.3f), new Vector2(0.15f, 0.15f));
 
-                
-                AudioRegionsHandler.addAudioRegion(new CondAudioRegion("RestingGrounds", currentRoom, PlayerData.instance.hasXunFlower,"RestingGrounds_12", "RestingGrounds_10"),new Vector2(19,-4), new Vector2(0.1f, 0.1f));
-                AudioRegionsHandler.addAudioRegion(new CondAudioRegion("Ruins", currentRoom, PlayerData.instance.hasXunFlower,"Ruins2_10"),new Vector2(18.4f, -4f), new Vector2(0.1f, 0.1f));
-                AudioRegionsHandler.addAudioRegion(new CondAudioRegion("RestingGrounds2", currentRoom,PlayerData.instance.hasXunFlower,"Crossroads_50", "RestingGrounds_06"),new Vector2(10.4f, -3.8f), new Vector2(0.1f, 0.1f));
+
+                AudioRegionsHandler.addAudioRegion(new CondAudioRegion("RestingGrounds", currentRoom, PlayerData.instance.hasXunFlower, "RestingGrounds_12", "RestingGrounds_10"), new Vector2(19, -4), new Vector2(0.1f, 0.1f));
+                AudioRegionsHandler.addAudioRegion(new CondAudioRegion("Ruins", currentRoom, PlayerData.instance.hasXunFlower, "Ruins2_10"), new Vector2(18.4f, -4f), new Vector2(0.1f, 0.1f));
+                AudioRegionsHandler.addAudioRegion(new CondAudioRegion("RestingGrounds2", currentRoom, PlayerData.instance.hasXunFlower, "Crossroads_50", "RestingGrounds_06"), new Vector2(10.4f, -3.8f), new Vector2(0.1f, 0.1f));
                 AudioRegionsHandler.addAudioRegion(new CondAudioRegion("Crossroads", currentRoom, PlayerData.instance.hasXunFlower, "Crossroads_04", "Crossroads_19", "Crossroads_43", "Crossroads_49"), new Vector2(4, -5.2f), new Vector2(0.3f, 0.3f));
                 AudioRegionsHandler.addAudioRegion(new CondAudioRegion("City Of Tears", currentRoom, PlayerData.instance.hasXunFlower, "Crossroads_49b", "Ruins1_01", "Ruins1_17", "Ruins1_28"), new Vector2(4.6f, -9.8f), new Vector2(0.1f, 0.1f));
                 AudioRegionsHandler.addAudioRegion(new CondAudioRegion("Fungus2", currentRoom, PlayerData.instance.hasXunFlower, "Fungus2_21", "Fungus2_10", "Fungus2_11", "Fungus2_18", "Fungus2_03"), new Vector2(-3.5f, -9.1f), new Vector2(0.1f, 0.1f));
@@ -135,7 +142,7 @@ namespace HK_AudioMod
                         audioRegion.gameObject.transform.position -= getMapCursorPosition();
                         Log(audioRegion.gameObject.transform.localPosition);
 
-                        if(audioRegion is CondAudioRegion)
+                        if (audioRegion is CondAudioRegion)
                         {
                             audioRegion.gameObject.GetComponent<SpriteRenderer>().sprite = green_square;
                         }
@@ -144,7 +151,7 @@ namespace HK_AudioMod
                             audioRegion.gameObject.GetComponent<SpriteRenderer>().sprite = s;
                         }
 
-                            Log("instantiated: " + audioRegion.name);
+                        Log("instantiated: " + audioRegion.name);
 
 
                         audioRegion.gameObject.layer = 5;
@@ -156,21 +163,21 @@ namespace HK_AudioMod
 
 
 
-
+                
 
             };
 
 
             On.MapMarkerMenu.Close += (orig, self) =>
-            {
-                Log("MapMarkerMenu Close");
-                orig(self);
-                UObject.Destroy(customCursor);
-                placementCursor = null;
-                mapMarkerMenuOpen = false;
-                AudioRegionsHandler.clearList();
-                flowerEscortHandler.clearList();
-            };
+                {
+                    Log("MapMarkerMenu Close");
+                    orig(self);
+                    UObject.Destroy(customCursor);
+                    placementCursor = null;
+                    mapMarkerMenuOpen = false;
+                    AudioRegionsHandler.clearList();
+                    
+                };
 
             On.SceneLoad.Begin += (orig, scene) =>
             {
@@ -184,10 +191,8 @@ namespace HK_AudioMod
 
 
 
-
             ModHooks.HeroUpdateHook += () =>
                 {
-
 
                     if (mapMarkerMenuOpen)
                     {
@@ -254,13 +259,9 @@ namespace HK_AudioMod
                         }
                     }
 
-
-
-
+                    isInvOpen = GameManager.instance.inventoryFSM.FsmVariables.GetFsmBool("Open").Value;
                 };
         }
-
-
 
         public Vector3 getMapCursorPosition()
         {
