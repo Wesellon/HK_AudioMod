@@ -23,6 +23,3 @@ A lightweight mod for Hollow Knight that adds auditory cues to help you:
 
 Feel free to open issues or submit pull requests for new features, bug fixes, or balance tweaks!  
 
----
-
-*Happy exploring!* 🎧🕷️  
