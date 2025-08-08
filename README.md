@@ -2,8 +2,8 @@
 
 A lightweight mod for Hollow Knight that adds auditory cues to help you:
 
-- **Locate bosses on the map** by playing a unique sound when you hover over each boss arena icon.  
-- **Navigate the Delicate Flower quest** using directional “beacon” pulses that guide you step by step.
+- **Locate bosses on the map** by playing a unique sound when you hover over each boss, helping navigation.  
+- **Navigate the Delicate Flower quest** using sound cues slightly guiding the player.
 
 ## Installation
 
@@ -15,9 +15,9 @@ A lightweight mod for Hollow Knight that adds auditory cues to help you:
 ## Usage
 
 - **Map Boss Cues**  
-  Open your map and hover the cursor over known boss locations to hear distinct audio cues.  
+  Open your map and hover the waypoint marker cursor over known boss locations to hear distinct audio cues.  
 - **Delicate Flower Guidance**  
-  During the Delicate Flower quest, follow the pulsing sound to lead you toward each waypoint.
+  During the Delicate Flower quest, hover the waypoint marker cursor over area exits to know where to go.
 
 ## Contributing & Feedback
 
