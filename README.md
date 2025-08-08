@@ -7,7 +7,7 @@ A lightweight mod for Hollow Knight that adds auditory cues to help you:
 
 ## Installation
 
-1. Download the latest release from the [Releases page](https://github.com/Wesellon/HK-HK_AudioMod/releases).  
+1. Download the latest release from the [Releases page]([https://github.com/Wesellon/HK-HK_AudioMod/releases](https://github.com/Wesellon/HK_AudioMod/releases)).  
 2. Extract the ZIP.  
 3. Copy the entire `AudioGuideMod` folder into your Hollow Knight `Mods` directory (typically `...\Steam\steamapps\common\Hollow Knight\Mods`).  
 4. Launch the game as usual — no additional steps required!
