@@ -65,7 +65,7 @@ namespace HK_AudioMod
         {
             foreach(AudioRegion ar in audioRegions)
             {
-                ar.gameObject.GetComponent<SpriteRenderer>().forceRenderingOff = !isVisible;
+                ar.setVisibility(isVisible);
             }
         }
 

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using Logger = Modding.Logger;
+using HK_AudioMod;
 
 namespace HK_AudioMod
 {
@@ -47,20 +48,28 @@ namespace HK_AudioMod
 
             this.audioSource.clip = ac;
             this.isEnabled = isEnabled;
+            setVisibility(isEnabled);
         }
 
-        
 
-        public void Play()
+
+        public virtual void Play()
         {
             if (!audioSource.isPlaying && isEnabled)
             {
+                Logger.Log(name + " collision");
                 audioSource.Play();
             }
         }
 
+        public void setVisibility(bool isVisible)
+        {
+            if (gameObject != null)
+            {
+                gameObject.SetActive(isVisible);
+            }
+        }
 
-        
 
 
     }
